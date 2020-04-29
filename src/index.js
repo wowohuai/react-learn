@@ -1,152 +1,31 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom'
-import './index.css'
+import { BrowserRouter as Router, Route, Switch} from 'react-router-dom'
+import { TodoList } from './components'
+//动态引入   React.lazy 目前只支持默认导出（default exports）
+const ContextApp = React.lazy(() => import('./context'))
+const Exercise = React.lazy(() => import('./exercise'))
 
-/**
- * 函数式组件
- * 组件只包含一个 render 方法，并且不包含 state
- */
-function Square(props) {
+function MyComponent() {
   return (
-    <button className="square" onClick={props.onClick}>
-      {props.value}
-    </button>
+    <Router>
+      {/* fallback 属性接受任何在组件加载过程中你想展示的 React 元素。 */}
+      <Suspense fallback={<div>loading</div>}>
+        <Switch>
+          <Route exact path="/" component={Exercise} />
+          <Route  path="/context" component={ContextApp} />
+          <Route  path="/todoList" component={TodoList} />
+        </Switch>
+      </Suspense>
+    </Router>
   )
 }
-
-class Board extends React.Component {
-  
-  renderSquare(i) {
-    return (
-      <Square 
-      value={this.props.squares[i]}
-      onClick={() => this.props.onClick(i)}
-      />
-    )
-  }
-  
-  render() {
-    // const winner = calculateWinner(this.state.squares)
-    // let status
-    // if(winner) {
-    //   status = 'Winner: '+winner
-    // } else{
-    //   status = 'Next player: ' + (this.state.isNext ? 'X' : 'O')
-    // }
-    return (
-      <div>
-        {/* <div className="status">{status}</div> */}
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
-      </div>
-    );
-  }
-}
-
-class Game extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      history: [{
-        squares: Array(9).fill(null),
-      }],
-      isNext: true,
-      stepNumber: 0
-    }
-  }
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return;
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
-    this.setState({
-      history: history.concat([{
-        squares: squares,
-      }]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext,
-    });
-  }
-  jumpTo(step) {
-    this.setState({
-      stepNumber: step,
-      xIsNext: (step % 2) === 0,
-    })
-  }
-  render() {
-    const history = this.state.history
-    const current = history[this.state.stepNumber]
-    const winner = calculateWinner(current.squares)
-    const moves = history.map((step, move) => {
-      const desc = move ?
-        'Go to move #' + move :
-        'Go to game start';
-      return (
-        <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
-        </li>
-      );
-    });
-    let status;
-    if (winner) {
-      status = 'Winner: ' + winner;
-    } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-    }
-    return (
-      <div className="game">
-        <div className="game-board">
-          <Board squares={current.squares} onClick={(i) => this.handleClick(i)}/>
-        </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
-        </div>
-      </div>
-    );
-  }
-}
-
 // ========================================
 
 ReactDOM.render(
-  <Game />,
+  // <Game />,
+  <MyComponent />,
   document.getElementById('root')
 );
 
 
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
-    }
-  }
-  return null;
-}
